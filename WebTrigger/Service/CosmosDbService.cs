@@ -16,14 +16,28 @@ namespace WebTrigger.Service
             _cosmosclient = new CosmosClient(connectionString);
             _container = _cosmosclient.GetContainer(databaseId,containerName);
         }
-        public async Task AddItemAsync(T obj)
+        public async Task AddItemAsync(T obj,string ParitionKeyValue)
         {
-            await _container.CreateItemAsync(obj, new PartitionKey(obj?.GetType().GetProperty("userId")?.GetValue(obj, null)?.ToString()));
+            await _container.CreateItemAsync(obj, new PartitionKey());
         }
         public async Task<T> GetItemAsync(string id)
         {
             var val = await _container.ReadItemAsync<T>(id,new(id));
             return val.Resource;
+        }
+        public async Task<IEnumerable<T>> GetItemsByQueryAsync(string query)
+        {
+            var queryDefinition = new QueryDefinition(query);
+            var iterator = _container.GetItemQueryIterator<T>(queryDefinition);
+            var results = new List<T>();
+
+            while (iterator.HasMoreResults)
+            {
+                var response = await iterator.ReadNextAsync();
+                results.AddRange(response);
+            }
+
+            return results;
         }
         public async Task<int> GetTotalCount()
         {
@@ -38,6 +52,15 @@ namespace WebTrigger.Service
             }
 
             return 0;
+        }
+        public async Task DeleteItemAsync(string id, string partitionKey)
+        {
+            await _container.DeleteItemAsync<T>(id, new PartitionKey(partitionKey));
+        }
+
+        public async Task UpdateItemAsync(string id, T obj, string partitionKey)
+        {
+            await _container.UpsertItemAsync(obj, new PartitionKey(partitionKey));
         }
     }
 }

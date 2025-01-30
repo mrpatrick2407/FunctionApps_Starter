@@ -84,5 +84,25 @@ namespace WebTrigger.Model
         public string? PhoneMessage { get; set; }
 
     }
+    public class TaskModel
+    {
+        public string? id { get; set; }
+        public string? userId { get; set; }
+        public DateTime? Deadline { get; set; }
+        public string? Type { get; set; } = "Task";
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public StatusModel? Status { get; set; } = StatusModel.Pending;  // Using TaskStatus enum
+        public string? Priority { get; set; }
+        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    public enum StatusModel
+    {
+        Pending,
+        Completed,
+        In_Progress
+    }
 
 }

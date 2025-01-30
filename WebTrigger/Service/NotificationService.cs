@@ -75,7 +75,136 @@ namespace WebTrigger.Service
 
             return string.Format(templateContent, email.FirstName, email.EmailRecipient);
         }
+        public async Task SendEscalationMail(TaskModel task, Email notification)
+        {
+            EmailAddress from = new EmailAddress(Environment.GetEnvironmentVariable("Sender_Email"));
+            EmailAddress to = new EmailAddress(notification.EmailRecipient);
+            var subject = "Task Escalation Alert";
+            var body = await GetTextTemplateContent("SMS", "EscalationTask", notification, task);
+            var emailContent = await GetTemplateContent("Email", "EscalationTask", notification, task);
 
+            var mail = MailHelper.CreateSingleEmail(from, to, subject, body, emailContent);
+            await _sendGridClient!.SendEmailAsync(mail);
+        }
 
+        public async Task SendPriorityTaskMail(TaskModel task, Email notification)
+        {
+            EmailAddress from = new EmailAddress(Environment.GetEnvironmentVariable("Sender_Email"));
+            EmailAddress to = new EmailAddress(notification.EmailRecipient);
+            var subject = "High Priority Task Alert";
+            var body = await GetTextTemplateContent("SMS", "PriorityTask", notification, task);
+            var emailContent = await GetTemplateContent("Email", "PriorityTask", notification, task);
+
+            var mail = MailHelper.CreateSingleEmail(from, to, subject, body, emailContent);
+            await _sendGridClient!.SendEmailAsync(mail);
+        }
+
+        public async Task<string> GetTemplateContent(string templateType, string templateName, Email email, TaskModel task)
+        {
+            var templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Templates", templateType, $"{templateName}.html");
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found: {templatePath}");
+
+            var templateContent = await File.ReadAllTextAsync(templatePath);
+            return templateContent
+                .Replace("{{FirstName}}", email.FirstName)
+                .Replace("{{LastName}}", email.LastName)
+                .Replace("{{Email}}", email.EmailRecipient)
+                .Replace("{{Title}}", task.Title)
+                .Replace("{{Description}}", task.Description)
+                .Replace("{{Deadline}}", task.Deadline?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")
+                .Replace("{{Priority}}", task.Priority);
+        }
+
+        public async Task<string> GetTextTemplateContent(string templateType, string templateName, Email email, TaskModel task)
+        {
+            var templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Templates", templateType, $"{templateName}.txt");
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found: {templatePath}");
+
+            var templateContent = await File.ReadAllTextAsync(templatePath);
+            return templateContent
+                .Replace("{{FirstName}}", email.FirstName)
+                .Replace("{{Title}}", task.Title)
+                .Replace("{{Deadline}}", task.Deadline?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")
+                .Replace("{{Priority}}", task.Priority);
+        }
+        public async Task SendPriorityTaskEmail(TaskModel task)
+        {
+            var from = new EmailAddress(Environment.GetEnvironmentVariable("Sender_Email"));
+            var to = new EmailAddress("recipient@example.com"); // You can replace this with the task assignee's email or dynamic assignment.
+            var subject = $"Priority Task: {task.Title} - Action Needed";
+
+            var body = "";
+            var emailContent = await GetTemplateContentForPriorityTask("Email", "PriorityTask", task);
+
+            var attachment = new Attachment
+            {
+                Content = Convert.ToBase64String(Encoding.ASCII.GetBytes(emailContent)),
+                Disposition = "attachment",
+                Filename = "PriorityTaskLog.html",
+                Type = "text/html"
+            };
+
+            var mail = MailHelper.CreateSingleEmail(from, to, subject, body, emailContent);
+            mail.AddAttachment(attachment);
+
+            await _sendGridClient!.SendEmailAsync(mail);
+        }
+
+        public async Task SendEscalationTaskEmail(TaskModel task)
+        {
+            var from = new EmailAddress(Environment.GetEnvironmentVariable("Sender_Email"));
+            var to = new EmailAddress("recipient@example.com"); // You can replace this with the task assignee's email or dynamic assignment.
+            var subject = $"Escalation: {task.Title} - Immediate Action Required";
+
+            var body = "";
+            var emailContent = await GetTemplateContentForEscalationTask("Email", "EscalationTask", task);
+
+            var attachment = new Attachment
+            {
+                Content = Convert.ToBase64String(Encoding.ASCII.GetBytes(emailContent)),
+                Disposition = "attachment",
+                Filename = "EscalationTaskLog.html",
+                Type = "text/html"
+            };
+
+            var mail = MailHelper.CreateSingleEmail(from, to, subject, body, emailContent);
+            mail.AddAttachment(attachment);
+
+            await _sendGridClient!.SendEmailAsync(mail);
+        }
+
+        public async Task<string> GetTemplateContentForPriorityTask(string templateType, string templateName, TaskModel task)
+        {
+            var templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Templates", templateType, $"{templateName}.html");
+
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found: {templatePath}");
+
+            var templateContent = await File.ReadAllTextAsync(templatePath);
+            var stringFormat = templateContent.Replace("{{TaskTitle}}", task.Title)
+                                              .Replace("{{TaskDescription}}", task.Description)
+                                              .Replace("{{TaskDeadline}}", task.Deadline?.ToString("MM/dd/yyyy HH:mm"))
+                                              .Replace("{{Priority}}", task.Priority ?? "Normal");
+
+            return stringFormat;
+        }
+
+        public async Task<string> GetTemplateContentForEscalationTask(string templateType, string templateName, TaskModel task)
+        {
+            var templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Templates", templateType, $"{templateName}.html");
+
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found: {templatePath}");
+
+            var templateContent = await File.ReadAllTextAsync(templatePath);
+            var stringFormat = templateContent.Replace("{{TaskTitle}}", task.Title)
+                                              .Replace("{{TaskDescription}}", task.Description)
+                                              .Replace("{{TaskDeadline}}", task.Deadline?.ToString("MM/dd/yyyy HH:mm"))
+                                              .Replace("{{EscalationReason}}", "Task has not been completed and is being escalated due to approaching deadline.");
+
+            return stringFormat;
+        }
     }
 }

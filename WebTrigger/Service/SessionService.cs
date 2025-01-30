@@ -22,7 +22,7 @@ namespace WebTrigger.Service
             session.userId = rowID;
             session.status = "Active";
             session.expiresAt=DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
-            await _cosmosDbService.AddItemAsync(session);
+            await _cosmosDbService.AddItemAsync(session,session.userId);
         }
 
         public async Task<bool> ValidateSessionAsync(string userId)

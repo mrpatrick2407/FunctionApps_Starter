@@ -1,0 +1,85 @@
+﻿<html>
+  <head>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f7f7f7;
+        color: #333;
+      }
+      .container {
+        width: 600px;
+        margin: 30px auto;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        padding-bottom: 20px;
+      }
+      .header h1 {
+        color: #e74c3c;
+        font-size: 28px;
+      }
+      .section {
+        margin-bottom: 20px;
+      }
+      .section h3 {
+        color: #2c3e50;
+      }
+      .details {
+        background-color: #ecf0f1;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 10px;
+      }
+      .priority {
+        color: #e74c3c;
+        font-weight: bold;
+      }
+      .footer {
+        text-align: center;
+        font-size: 14px;
+        color: #7f8c8d;
+        padding-top: 20px;
+      }
+      .btn {
+        background-color: #3498db;
+        color: #fff;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+        display: inline-block;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Priority Task: {{TaskTitle}}</h1>
+      </div>
+      <div class="section">
+        <h3>Task Description</h3>
+        <p>{{TaskDescription}}</p>
+      </div>
+      <div class="section">
+        <h3>Deadline</h3>
+        <p>{{TaskDeadline}}</p>
+      </div>
+      <div class="section">
+        <h3>Priority Level</h3>
+        <p class="priority">{{Priority}}</p>
+      </div>
+      <div class="footer">
+        <p>This task has been marked as high priority. Please address it as soon as possible.</p>
+        <a href="#" class="btn">Take Action</a>
+      </div>
+    </div>
+  </body>
+</html>

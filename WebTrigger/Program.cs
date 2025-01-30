@@ -10,7 +10,7 @@ var host = new HostBuilder()
     .ConfigureServices(services =>
     {
 
-        services.AddApplicationInsightsTelemetryWorkerService();
+        services.AddApplicationInsightsTelemetryWorkerService(option=>option.ConnectionString= Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING"));
         services.ConfigureFunctionsApplicationInsights();
         services.Configure<KestrelServerOptions>(options => options.AllowSynchronousIO = true);
         services.AddHttpClient();
@@ -29,6 +29,7 @@ var host = new HostBuilder()
         services.AddSingleton(new SessionService(new(DBconnectionString, databaseid, containerName)));
         services.AddSingleton(new NotificationService(Environment.GetEnvironmentVariable("SENDGRID_APIKEY")!, Environment.GetEnvironmentVariable("ACCOUNT_SID")!,
             Environment.GetEnvironmentVariable("AUTH_TOKEN")!));
+        services.AddSingleton(new TaskService(new CosmosDbService<TaskModel>(DBconnectionString,databaseid,"task")));
     })
     .Build();
 

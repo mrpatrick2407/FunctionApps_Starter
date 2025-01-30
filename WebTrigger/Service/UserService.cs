@@ -24,5 +24,10 @@ namespace WebTrigger.Service
         {
             await _tableClient.AddEntityAsync<User>(user);
         }
+        public async Task<User?> GetUserByUserId(string userID)
+        {
+            var user = await _tableClient.QueryAsync<User>(user => user.RowKey!.Equals(userID)).ToListAsync();
+            return user.FirstOrDefault();
+        }
     }
 }

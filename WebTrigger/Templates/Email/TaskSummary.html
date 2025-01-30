@@ -1,0 +1,95 @@
+﻿<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        .container {
+            width: 600px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+        }
+
+            .header h1 {
+                color: #3498db;
+                font-size: 28px;
+            }
+
+        .summary-section {
+            margin-top: 20px;
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .summary-item {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .pending {
+            color: #e67e22;
+            font-weight: bold;
+        }
+
+        .updated {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        .priority {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+            padding-top: 20px;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Task Summary</h1>
+            <p>Hello {{UserName}}, here’s your latest task summary.</p>
+        </div>
+        <div class="summary-section">
+            <div class="summary-item">📌 <span class="pending">{{PendingTasks}}</span> Pending Tasks</div>
+            <div class="summary-item">✅ <span class="updated">{{UpdatedTasks}}</span> Updated Tasks</div>
+            <div class="summary-item">⚠️ <span class="priority">{{PriorityTasks}}</span> High Priority Tasks</div>
+        </div>
+        <div class="footer">
+            <p>Make sure to check your pending tasks and prioritize them accordingly.</p>
+            <a href="#" class="btn">View Tasks</a>
+        </div>
+    </div>
+</body>
+</html>

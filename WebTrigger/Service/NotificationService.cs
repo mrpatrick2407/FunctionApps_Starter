@@ -151,7 +151,19 @@ namespace WebTrigger.Service
 
             await _sendGridClient!.SendEmailAsync(mail);
         }
+        public async Task SendTaskSummaryEmail(int pendingTasks, int updatedTasks, int priorityTasks,string Recipient,string name)
+        {
+            var from = new EmailAddress(Environment.GetEnvironmentVariable("Sender_Email"));
+            var to = new EmailAddress(Recipient); // Update this dynamically
 
+            var subject = "Your Task Summary";
+
+            var emailContent = await GetTemplateContentForTaskSummary("Email", "TaskSummary",name, Recipient, pendingTasks, updatedTasks, priorityTasks);
+
+            var mail = MailHelper.CreateSingleEmail(from, to, subject, "", emailContent);
+
+            await _sendGridClient!.SendEmailAsync(mail);
+        }
         public async Task SendEscalationTaskEmail(TaskModel task)
         {
             var from = new EmailAddress(Environment.GetEnvironmentVariable("Sender_Email"));
@@ -205,6 +217,23 @@ namespace WebTrigger.Service
                                               .Replace("{{EscalationReason}}", "Task has not been completed and is being escalated due to approaching deadline.");
 
             return stringFormat;
+        }
+       
+
+        private async Task<string> GetTemplateContentForTaskSummary(string templateType, string templateName,string name, string Recipient, int pendingTasks, int updatedTasks, int priorityTasks)
+        {
+            string templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Templates", templateType, $"{templateName}.html");
+
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found: {templatePath}");
+
+            string templateContent = await File.ReadAllTextAsync(templatePath);
+
+            return templateContent
+                .Replace("{{UserName}}", name ?? "User")
+                .Replace("{{PendingTasks}}", pendingTasks.ToString())
+                .Replace("{{UpdatedTasks}}", updatedTasks.ToString())
+                .Replace("{{PriorityTasks}}", priorityTasks.ToString());
         }
     }
 }

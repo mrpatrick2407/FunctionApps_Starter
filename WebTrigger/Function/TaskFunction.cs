@@ -80,6 +80,30 @@ namespace WebTrigger.Function
             await _taskService.UpdateTaskAsync(requestData.Id, task);
             return new OkObjectResult("Task status updated successfully.");
         }
+        [Function("GetTasksByUserId")]
+        public async Task<IActionResult> GetTasksByUserIdAsync(
+    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "tasks/{userId}")] HttpRequest req, string userId)
+        {
+            if (!await IsSessionValid(req))
+            {
+                return new UnauthorizedResult();
+            }
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return new BadRequestObjectResult("User ID is required.");
+            }
+
+            var tasks = await _taskService.GetTasksByUserIdAsync(userId);
+
+            if (tasks == null || !tasks.Any())
+            {
+                return new NotFoundObjectResult("No tasks found for this user.");
+            }
+
+            return new OkObjectResult(tasks);
+        }
+
     }
 
     public class UpdateTaskRequest

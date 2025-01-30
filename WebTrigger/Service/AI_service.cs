@@ -23,7 +23,7 @@ public class AIService
         _appInsightsApi = appInsightsApi ?? throw new ArgumentNullException(nameof(appInsightsApi));
     }
 
-    public async Task QueryMetricsAndTrackAsync(string query, string requestId, string name)
+    public async Task<JArray> QueryMetricsAndTrackAsync(string query, string requestId, string name)
     {
         try
         {
@@ -35,7 +35,8 @@ public class AIService
                 throw new FormatException("No data returned from the query.");
             }
 
-            await TrackMetricsAsync(rows, requestId, name);
+            TrackMetrics(rows, requestId, name);
+            return rows;
         }
         catch (Exception ex)
         {
@@ -50,6 +51,7 @@ public class AIService
 
             _telemetryClient.TrackException(exceptionTelemetry);
             _logger.LogError($"[Error]: Client Request ID {requestId}: {ex.Message}");
+            return new JArray();
             throw;
         }
         finally
@@ -57,8 +59,35 @@ public class AIService
             _telemetryClient.Flush();
         }
     }
+    public async Task<JArray> TrackMetricAsync(JArray rows,string requestId, string query,string name)
+    {
+        try
+        {
+            TrackMetrics(rows, requestId, name);
+            return rows;
+        }
+        catch (Exception ex)
+        {
+            var exceptionTelemetry = new ExceptionTelemetry(ex)
+            {
+                Context = { Operation = { Id = requestId } }
+            };
 
-    private async Task<JArray> GetMetricsFromApplicationInsightsAsync(string query, string requestId)
+            exceptionTelemetry.Properties.Add("TestName", name);
+            exceptionTelemetry.Properties.Add("TestQuery", query);
+            exceptionTelemetry.Properties.Add("TestRequestId", requestId);
+
+            _telemetryClient.TrackException(exceptionTelemetry);
+            _logger.LogError($"[Error]: Client Request ID {requestId}: {ex.Message}");
+            return new JArray();
+            throw;
+        }
+        finally
+        {
+            _telemetryClient.Flush();
+        }
+    }
+    public async Task<JArray?> GetMetricsFromApplicationInsightsAsync(string query, string requestId)
     {
         using (var httpClient = new HttpClient())
         {
@@ -73,13 +102,12 @@ public class AIService
 
                 var resultJson = await httpResponse.Content.ReadAsAsync<JToken>();
                 var rows = resultJson.SelectToken("Tables[0].Rows");
-
                 return rows as JArray;
             }
         }
     }
 
-    private async Task TrackMetricsAsync(JArray rows, string requestId, string name)
+    public void TrackMetrics(JArray rows, string requestId, string name)
     {
         foreach (var row in rows)
         {

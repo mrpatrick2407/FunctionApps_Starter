@@ -235,5 +235,40 @@ namespace WebTrigger.Service
                 .Replace("{{UpdatedTasks}}", updatedTasks.ToString())
                 .Replace("{{PriorityTasks}}", priorityTasks.ToString());
         }
+        public async Task SendApplicationInsightSummaryEmail(ApplicationInsightResult result, string appName, string emailRecipient)
+        {
+            var from = new EmailAddress(Environment.GetEnvironmentVariable("Sender_Email"));
+            var to = new EmailAddress(emailRecipient);
+            var subject = $"{appName} - Daily Telemetry Report";
+            var body = "";
+            var emailContent = await GetTemplateContentForApplicationInsightSummary("Email", "ApplicationInsightSummary", result, appName);
+            var attachment = new Attachment
+            {
+                Content = Convert.ToBase64String(Encoding.ASCII.GetBytes(emailContent)),
+                Disposition = "attachment",
+                Filename = "ApplicationInsightSummary.html",
+                Type = "text/plain"
+            };
+            var mail = MailHelper.CreateSingleEmail(from, to, subject, body, emailContent);
+            mail.AddAttachment(attachment);
+            await _sendGridClient!.SendEmailAsync(mail);
+        }
+
+        public async Task<string> GetTemplateContentForApplicationInsightSummary(string templateType, string templateName, ApplicationInsightResult result, string appName)
+        {
+            var templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Templates", templateType, $"{templateName}.html");
+
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found: {templatePath}");
+
+            var templateContent = await File.ReadAllTextAsync(templatePath);
+            var stringFormat = templateContent.Replace("{appName}", appName)
+                                              .Replace("{today}", DateTime.UtcNow.ToString("yyyy-MM-dd"))
+                                              .Replace("{result.TotalRequests}", result.TotalRequests.ToString())
+                                              .Replace("{result.FailedRequests}", result.FailedRequests.ToString())
+                                              .Replace("{result.TotalExceptions}", result.TotalExceptions.ToString());
+
+            return stringFormat;
+        }
     }
 }

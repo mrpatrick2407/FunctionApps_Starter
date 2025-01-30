@@ -1,0 +1,48 @@
+﻿<html>
+<body>
+    <p style='text-align: center;'>
+        <strong>
+            {appName} daily
+            telemetry report {today}
+        </strong>
+    </p>
+    <p style='text-align: center;'>
+        The following data shows
+        insights based on telemetry from last 24 hours.
+    </p>
+    <table align='center' style='width: 95%; max-width:
+480px;'>
+        <tbody>
+            <tr>
+                <td style='min-width: 150px; text-align:
+left;'>
+                    <strong>Total requests</strong>
+                </td>
+                <td style='min-width: 100px; text-align:
+right;'>
+                    <strong>{result.TotalRequests}</strong>
+                </td>
+            </tr>
+            <tr>
+                210 | Troubleshooting and monitoring Azure Functions
+                <td style='min-width: 150px; text-align:
+left;'>
+                    <strong>Failed requests</strong>
+                </td>
+                <td style='min-width: 100px; text-align:
+right;'>
+                    <strong>{result.FailedRequests}</strong>
+                </td>
+            </tr>
+        <td style='min-width: 150px; text-align:
+left;'>
+            <strong>Total exceptions</strong>
+        </td>
+        <td style='min-width: 100px; text-align:
+right;'>
+            <strong>{result.TotalExceptions}</strong>
+        </td>
+        </tr>
+        </tbody>
+    </table>
+</body></html>

@@ -34,6 +34,12 @@ namespace WebTrigger.Model
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
     }
+    public class ApplicationInsightResult
+    {
+        public int? TotalRequests { get; set; }
+        public int ?FailedRequests { get; set; }
+        public int ?TotalExceptions { get; set; }
+    }
 
     public class UserDTO
     {

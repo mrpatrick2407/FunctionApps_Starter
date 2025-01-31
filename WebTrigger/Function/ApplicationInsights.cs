@@ -21,7 +21,7 @@ namespace WebTrigger.Function
         }
 
         [Function("PowerBI")]
-        public async Task<IActionResult> Power_BI([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
+        public async Task<IActionResult> Power_BI([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequest req)
         {
             string requestId=Guid.NewGuid().ToString();
             _logger.LogInformation($"PowerBI requestID: {requestId}");
@@ -65,7 +65,7 @@ namespace WebTrigger.Function
             };
 
             await _notificationService.SendApplicationInsightSummaryEmail(emailRequest,"FunctionApp",Environment.GetEnvironmentVariable("ADMIN_EMAIL")!);
-            await _applicationService.TrackMetricAsync(new JArray(result[0][1]!), requestId,query,"requestsPerHour");
+            await _applicationService.TrackMetricAsync(new JArray { result[0] }, requestId,query,"requestsPerHour");
         }
     }
 

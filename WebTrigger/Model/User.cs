@@ -1,9 +1,11 @@
 ﻿using Azure;
 using Azure.Data.Tables;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace WebTrigger.Model
@@ -16,15 +18,7 @@ namespace WebTrigger.Model
         private string? _rowKey;
         public string? RowKey
         {
-            get
-            {
-                if (_rowKey == null)
-                {
-                    _rowKey = Guid.NewGuid().ToString();
-                }
-                return _rowKey;
-            }
-            set { }
+            get;set;
         }
         public string? firstName { get; set; }
         public string? lastName { get; set; }
@@ -98,17 +92,24 @@ namespace WebTrigger.Model
         public string? Type { get; set; } = "Task";
         public string? Title { get; set; }
         public string? Description { get; set; }
+        [System.Text.Json.Serialization.JsonConverter(typeof(JsonStringEnumConverter))]
         public StatusModel? Status { get; set; } = StatusModel.Pending;  // Using TaskStatus enum
         public string? Priority { get; set; }
         public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
     }
-
+    public class EscalateTask
+    {
+        public string? id;
+        public string ?AssignedTo;
+        public string ?Name;
+        public DateTime? Deadline;
+    }
     public enum StatusModel
     {
         Pending,
         Completed,
-        In_Progress
+        InProgress
     }
 
 }

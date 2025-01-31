@@ -18,12 +18,21 @@ namespace WebTrigger.Service
         }
         public async Task AddItemAsync(T obj,string ParitionKeyValue)
         {
-            await _container.CreateItemAsync(obj, new PartitionKey());
+            await _container.CreateItemAsync(obj, new PartitionKey(ParitionKeyValue));
         }
-        public async Task<T> GetItemAsync(string id)
+        public async Task<T?> GetItemAsync(string id)
         {
-            var val = await _container.ReadItemAsync<T>(id,new(id));
-            return val.Resource;
+            var queryDefinition = new QueryDefinition($"Select * from c where c.id={id}");
+            var iterator = _container.GetItemQueryIterator<T>(queryDefinition);
+            var results = new List<T>();
+
+            while (iterator.HasMoreResults)
+            {
+                var response = await iterator.ReadNextAsync();
+                results.AddRange(response);
+            }
+
+            return results.FirstOrDefault();
         }
         public async Task<IEnumerable<T>> GetItemsByQueryAsync(string query)
         {

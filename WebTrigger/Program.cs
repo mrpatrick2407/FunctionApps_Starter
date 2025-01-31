@@ -1,7 +1,9 @@
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using WebTrigger.Model;
 using WebTrigger.Service;
 using WebTrigger.Service.IService;
@@ -25,11 +27,20 @@ var host = new HostBuilder()
         services.AddSingleton<INotificationBlobService>(new BlobService(connectionString, "userregistrationemaillogs"));
         string DBconnectionString = Environment.GetEnvironmentVariable("CosmosDBConnectionString")!;
         string databaseid = Environment.GetEnvironmentVariable("DatabaseId")!;
-        string containerName = Environment.GetEnvironmentVariable("CosmosContainerName")!;
+        string containerName = Environment.GetEnvironmentVariable("SessionContainerName")!;
         services.AddSingleton(new SessionService(new(DBconnectionString, databaseid, containerName)));
         services.AddSingleton(new NotificationService(Environment.GetEnvironmentVariable("SENDGRID_APIKEY")!, Environment.GetEnvironmentVariable("ACCOUNT_SID")!,
             Environment.GetEnvironmentVariable("AUTH_TOKEN")!));
         services.AddSingleton(new TaskService(new CosmosDbService<TaskModel>(DBconnectionString,databaseid,"task")));
+        services.AddSingleton<AIService>(sp =>
+        {
+            var telemetryClient = sp.GetRequiredService<TelemetryClient>();
+            var logger = sp.GetRequiredService<ILogger<AIService>>();
+            var aiAppKey = Environment.GetEnvironmentVariable("AI_APP_KEY");
+            var aiAppId = Environment.GetEnvironmentVariable("AI_APP_ID");
+            var appInsightsApi = Environment.GetEnvironmentVariable("AI_API");
+            return new AIService(telemetryClient, logger, aiAppKey!, aiAppId!, appInsightsApi!);
+        });
     })
     .Build();
 

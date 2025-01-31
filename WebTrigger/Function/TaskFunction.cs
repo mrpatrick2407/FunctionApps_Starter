@@ -23,11 +23,12 @@ namespace WebTrigger.Function
 
         private async Task<bool> IsSessionValid(HttpRequest req)
         {
-            if (!req.Headers.TryGetValue("SessionId", out var sessionId) || string.IsNullOrEmpty(sessionId))
+            if (!req.Headers.TryGetValue("sessionId", out var sessionId) || string.IsNullOrEmpty(sessionId))
             {
                 return false;
             }
-            return await _sessionService.ValidateSessionAsync(sessionId!);
+            bool res= await _sessionService.ValidateSessionAsync(sessionId!);
+            return res;
         }
 
         [Function("CreateTask")]
@@ -51,8 +52,8 @@ namespace WebTrigger.Function
             return new OkObjectResult("Task created successfully.");
         }
 
-        [Function("UpdateTaskStatus")]
-        public async Task<IActionResult> UpdateTaskStatusAsync(
+        [Function("UpdateTask")]
+        public async Task<IActionResult> UpdateTaskAsync(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
         {
             if (!await IsSessionValid(req))
@@ -61,14 +62,14 @@ namespace WebTrigger.Function
             }
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var requestData = JsonSerializer.Deserialize<UpdateTaskRequest>(requestBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var requestData = JsonSerializer.Deserialize<TaskModel>(requestBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            if (requestData == null || string.IsNullOrEmpty(requestData.Id) || string.IsNullOrEmpty(requestData.Status.ToString()))
+            if (requestData == null || string.IsNullOrEmpty(requestData.id) || string.IsNullOrEmpty(requestData.Status.ToString()))
             {
                 return new BadRequestObjectResult("Invalid update request.");
             }
 
-            var task = await _taskService.GetTaskByIdAsync(requestData.Id);
+            var task = await _taskService.GetTaskByIdAsync(requestData.id);
             if (task == null)
             {
                 return new NotFoundObjectResult("Task not found.");
@@ -77,7 +78,7 @@ namespace WebTrigger.Function
             task.Status = requestData.Status;
             task.UpdatedAt = DateTime.UtcNow;
 
-            await _taskService.UpdateTaskAsync(requestData.Id, task);
+            await _taskService.UpdateTaskAsync(requestData.id, task);
             return new OkObjectResult("Task status updated successfully.");
         }
         [Function("GetTasksByUserId")]
@@ -104,12 +105,6 @@ namespace WebTrigger.Function
             return new OkObjectResult(tasks);
         }
 
-    }
-
-    public class UpdateTaskRequest
-    {
-        public string ?Id { get; set; }
-        public StatusModel Status { get; set; }
     }
 
 }

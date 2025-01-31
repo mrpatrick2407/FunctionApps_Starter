@@ -119,7 +119,7 @@ public class AIService
                 _logger.LogInformation($"[Verbose]: Metric '{metricName}' result is {value}");
 
              
-                var metricTelemetry = new MetricTelemetry(metricName, value);
+                var metricTelemetry = new MetricTelemetry(name, value);
                 _telemetryClient.TrackMetric(metricTelemetry);
             }
             else

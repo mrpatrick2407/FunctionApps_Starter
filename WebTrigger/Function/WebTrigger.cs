@@ -2,6 +2,7 @@ using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -11,6 +12,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using WebTrigger.Model;
@@ -43,12 +45,17 @@ namespace WebTrigger.Function
         }
 
         [Function("RegisterUser")]
-        public async Task<IActionResult> RegisterUser(
+        public async Task<HttpResponseData> RegisterUser(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, [Microsoft.Azure.Functions.Worker.Http.FromBody]User user, FunctionContext context)
         {
             var userExists = await _userService.UserExists(user.email!);
+            var response = req.CreateResponse();
             if (userExists)
-                return new BadRequestObjectResult(new { message= "User already registered" });
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                await response.WriteAsJsonAsync(new { message = "User already registered" });
+                return response;
+            }
             else
             {
                 await _userService.RegisterUser(user);
@@ -65,8 +72,11 @@ namespace WebTrigger.Function
                     RowKey = user.RowKey,
                     Phone=user.phone
                 }));
-                await _sessionService.CreateSessionAsync(user.RowKey!);
-                return new JsonResult(new { message = "Registered Successfully", data = user }) { StatusCode = 200 };
+                var sessionId=await _sessionService.CreateSessionAsync(user.RowKey!);
+                response.StatusCode = HttpStatusCode.OK;
+                await response.WriteAsJsonAsync(new { message = "Registered Successfully", data = user });
+                response.Headers.Add("sessionId",sessionId);
+                return response;
             }
         }
 
@@ -101,6 +111,38 @@ namespace WebTrigger.Function
 
             await _imageSmallBlobService.ResizeImageAndSaveAsync(blob, ImageModel.ImageSize.Small, imageFormat,SmallBlobName);
             await _imageMediumBlobService.ResizeImageAndSaveAsync(blob, ImageModel.ImageSize.Medium, imageFormat,SmallBlobName);
+        }
+        [Function("LoginUser")]
+        public async Task<HttpResponseData> LoginUser(
+    [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req,
+    FunctionContext context)
+        {
+            var requestBody = await req.ReadAsStringAsync();
+            var loginRequest = JsonConvert.DeserializeObject<LoginRequest>(requestBody!);
+            var response = req.CreateResponse();
+
+            if (loginRequest == null || string.IsNullOrEmpty(loginRequest.Email))
+            {
+                response.StatusCode= HttpStatusCode.BadRequest;
+                return response;
+            }
+            var getUserId =  (_userService.GetUserByEmail(loginRequest.Email)).Result!.RowKey;
+            var existingSession = await _sessionService.GetActiveSessionAsync(getUserId!);
+
+            if (existingSession)
+            {
+                response.StatusCode = HttpStatusCode.OK;
+                await response.WriteAsJsonAsync(new { message = "Active session found" });
+                return response;
+            }
+            else
+            {
+                var newSessionId = await _sessionService.CreateSessionAsync(getUserId!);
+                response.StatusCode = HttpStatusCode.OK;
+                response.Headers.Add("sessionId", newSessionId);
+                await response.WriteAsJsonAsync(new { message = "New session created" });
+                return response;
+            }
         }
 
     }

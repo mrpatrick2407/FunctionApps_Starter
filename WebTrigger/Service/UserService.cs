@@ -22,11 +22,18 @@ namespace WebTrigger.Service
         }
         public async Task RegisterUser(User user)
         {
+            user.RowKey = string.IsNullOrEmpty(user.RowKey) ?Guid.NewGuid().ToString():user.RowKey;
             await _tableClient.AddEntityAsync<User>(user);
         }
         public async Task<User?> GetUserByUserId(string userID)
         {
             var user = await _tableClient.QueryAsync<User>(user => user.RowKey!.Equals(userID)).ToListAsync();
+            return user.FirstOrDefault();
+        }
+
+        public async Task<User?> GetUserByEmail(string email)
+        {
+            var user = await _tableClient.QueryAsync<User>(user => user.email!.Equals(email)).ToListAsync();
             return user.FirstOrDefault();
         }
     }

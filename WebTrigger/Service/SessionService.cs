@@ -15,22 +15,34 @@ namespace WebTrigger.Service
         {
             _cosmosDbService = cosmosDbService;
         }
-        public async Task CreateSessionAsync(string rowID)
+        public async Task<string> CreateSessionAsync(string rowID)
         {
             Session session = new();
-            session.id =Convert.ToString(await _cosmosDbService.GetTotalCount()+1);
-            session.userId = rowID;
-            session.status = "Active";
-            session.expiresAt=DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+            if (string.IsNullOrEmpty(session.id)) session.id = Guid.NewGuid().ToString();
+            if (string.IsNullOrEmpty(session.userId)) session.userId = rowID;
+            if (string.IsNullOrEmpty(session.status)) session.status = "Active";
+            if (string.IsNullOrEmpty(session.expiresAt)) session.expiresAt = DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
             await _cosmosDbService.AddItemAsync(session,session.userId);
+            return session.id;
         }
 
-        public async Task<bool> ValidateSessionAsync(string userId)
+        public async Task<bool> ValidateSessionAsync(string sessionId)
         {
-            var session = await _cosmosDbService.GetItemAsync(userId);
-            if (session == null || DateTime.Parse(session.expiresAt!) < DateTime.UtcNow)
-                return false;
-            return true;
+            var query = $"SELECT * FROM c WHERE c.id = '{sessionId}'";
+            var enumerable = await _cosmosDbService.GetItemsByQueryAsync(query);
+            return enumerable.Any(row =>
+            {
+                var expires = DateTime.Parse(row.expiresAt!);
+                var result = expires > DateTime.Now;
+                return result;
+            });        
+        }
+
+        public async Task<bool> GetActiveSessionAsync(string userId)
+        {
+            var query = $"SELECT * FROM c WHERE c.userId = '{userId}'";
+            var enumerbale=await _cosmosDbService.GetItemsByQueryAsync(query);
+            return enumerbale.Any(ro =>DateTime.Parse(ro.expiresAt!) > DateTime.Now);
         }
     }
 }

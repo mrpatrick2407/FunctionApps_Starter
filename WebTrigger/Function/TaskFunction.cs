@@ -126,7 +126,14 @@ new DynamicClass() { task = task, sessionId = GetSessionId(req)! });
 
             return new OkObjectResult(tasks);
         }
-
+        [Function("BulkImport")]
+        public async Task<IActionResult> BulkImport(
+    [BlobTrigger("bulk")] Stream blob, FunctionContext context)
+        {
+           var streamData=new StreamReader(blob).ReadToEnd();
+           var deserializedData=CSVService<TaskModel>.ReadCSV(streamData);
+            
+        }
     }
 
 }

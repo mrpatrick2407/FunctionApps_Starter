@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Text.Json;
+using WebTrigger.Function.Durable.Orchestrator;
 using WebTrigger.Model;
 using WebTrigger.Service;
 
@@ -30,26 +34,44 @@ namespace WebTrigger.Function
             bool res= await _sessionService.ValidateSessionAsync(sessionId!);
             return res;
         }
-
-        [Function("CreateTask")]
-        public async Task<IActionResult> CreateTaskAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
+        private string? GetSessionId(HttpRequestData req)
         {
-            if (!await IsSessionValid(req))
+            if (!req.Headers.TryGetValues("sessionId", out var sessionId) || !sessionId.Any())
             {
-                return new UnauthorizedResult();
+                return string.Empty;
             }
+            else
+            {
+                return sessionId.FirstOrDefault()!;
+            }
+        }
+        [Function("CreateTask")]
+        public async Task<HttpResponseData> CreateTaskAsync(
+            [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, [DurableClient] DurableTaskClient orchestrationClient,
+    FunctionContext executionContext)
+        {
+            //if (!await IsSessionValid(req))
+            //{
+            //    return new UnauthorizedResult();
+            //}
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var task = JsonSerializer.Deserialize<TaskModel>(requestBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
+            var task = JsonSerializer.Deserialize<TaskModel>(requestBody, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            var response = req.CreateResponse();
             if (task == null || string.IsNullOrEmpty(task.userId))
             {
-                return new BadRequestObjectResult("Invalid task data.");
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return response;
             }
 
-            await _taskService.CreateTaskAsync(task);
-            return new OkObjectResult("Task created successfully.");
+            //await _taskService.CreateTaskAsync(task);
+            //return new OkObjectResult("Task created successfully.");
+            task.UpdatedAt = task.UpdatedAt ?? DateTime.Now;
+            task.id = string.IsNullOrEmpty(task.id) ? Guid.NewGuid().ToString() : task.id;
+            string instanceId = await orchestrationClient.ScheduleNewOrchestrationInstanceAsync(
+nameof(TaskManagementOrchestrator),
+new DynamicClass() { task = task, sessionId = GetSessionId(req)! });
+            return await orchestrationClient.CreateCheckStatusResponseAsync(req,instanceId);
         }
 
         [Function("UpdateTask")]

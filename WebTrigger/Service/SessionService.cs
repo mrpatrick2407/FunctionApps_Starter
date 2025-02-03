@@ -21,7 +21,7 @@ namespace WebTrigger.Service
             if (string.IsNullOrEmpty(session.id)) session.id = Guid.NewGuid().ToString();
             if (string.IsNullOrEmpty(session.userId)) session.userId = rowID;
             if (string.IsNullOrEmpty(session.status)) session.status = "Active";
-            if (string.IsNullOrEmpty(session.expiresAt)) session.expiresAt = DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+            if (string.IsNullOrEmpty(session.expiresAt)) session.expiresAt = DateTime.Now.AddHours(1).ToString("o");
             await _cosmosDbService.AddItemAsync(session,session.userId);
             return session.id;
         }
@@ -32,8 +32,10 @@ namespace WebTrigger.Service
             var enumerable = await _cosmosDbService.GetItemsByQueryAsync(query);
             return enumerable.Any(row =>
             {
-                var expires = DateTime.Parse(row.expiresAt!);
-                var result = expires > DateTime.Now;
+                var expiresUtc = DateTime.Parse(row.expiresAt!).ToUniversalTime(); 
+                var serverTimeZone = TimeZoneInfo.Local; 
+                var expiresLocal = TimeZoneInfo.ConvertTimeFromUtc(expiresUtc, serverTimeZone); 
+                var result = expiresLocal > DateTime.Now;
                 return result;
             });        
         }

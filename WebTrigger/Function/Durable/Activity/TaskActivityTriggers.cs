@@ -31,14 +31,14 @@ namespace WebTrigger.Function.Durable.Activity
             notificationService = new(SendGridApiKey, TwilioAccountSid, TwilioAuthToken);
             userService = new(ConnectionString, "User");
         }
-        [FunctionName(nameof(CreateTaskDurable))]
+        [Function(nameof(CreateTaskDurable))]
         public static async Task CreateTaskDurable([ActivityTrigger] TaskModel taskDetails)
         {
             Console.WriteLine($"Creating task for user: {taskDetails.userId}");
             await taskService.CreateTaskAsync(taskDetails);
 
         }
-        [FunctionName(nameof(CheckPriorityAndNotify))]
+        [Function(nameof(CheckPriorityAndNotify))]
         public static async Task CheckPriorityAndNotify([ActivityTrigger] TaskModel taskDetails)
         {
             if (taskDetails.Priority == "High")
@@ -51,7 +51,7 @@ namespace WebTrigger.Function.Durable.Activity
                 }               
             }
         }
-        [FunctionName(nameof(EscalateTask))]
+        [Function(nameof(EscalateTask))]
         public static async Task EscalateTask([ActivityTrigger] TaskModel taskDetails)
         {
             Console.WriteLine($"Escalating task {taskDetails.userId} with task id {taskDetails.id}");
@@ -63,7 +63,7 @@ namespace WebTrigger.Function.Durable.Activity
                 await taskService.EscalateTask(escalateTask);
             }
         }
-        [FunctionName(nameof(CheckTaskStatus))]
+        [Function(nameof(CheckTaskStatus))]
         public static async Task<StatusModel?> CheckTaskStatus([ActivityTrigger] string taskId)
         {
             var task=  await taskService.GetTaskByIdAsync(taskId);

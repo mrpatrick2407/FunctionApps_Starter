@@ -32,7 +32,7 @@ namespace WebTrigger.Function.Durable.Activity
             notificationService =new(SendGridApiKey,TwilioAccountSid,TwilioAuthToken);
             userService =new(ConnectionString,"User");
         }
-        [FunctionName("ValidateSession")]
+        [Function("ValidateSession")]
         public static async Task<bool> ValidateSession([ActivityTrigger] string sessionId)
         {
             // Replace with actual session validation logic

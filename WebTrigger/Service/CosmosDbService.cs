@@ -22,7 +22,7 @@ namespace WebTrigger.Service
         }
         public async Task<T?> GetItemAsync(string id)
         {
-            var queryDefinition = new QueryDefinition($"Select * from c where c.id={id}");
+            var queryDefinition = new QueryDefinition($"Select * from c where c.id='{id}'");
             var iterator = _container.GetItemQueryIterator<T>(queryDefinition);
             var results = new List<T>();
 

@@ -31,7 +31,7 @@ var host = new HostBuilder()
         services.AddSingleton(new SessionService(new(DBconnectionString, databaseid, containerName)));
         services.AddSingleton(new NotificationService(Environment.GetEnvironmentVariable("SENDGRID_APIKEY")!, Environment.GetEnvironmentVariable("ACCOUNT_SID")!,
             Environment.GetEnvironmentVariable("AUTH_TOKEN")!));
-        services.AddSingleton(new TaskService(new CosmosDbService<TaskModel>(DBconnectionString,databaseid,"task")));
+        services.AddSingleton(new TaskService(new CosmosDbService<TaskModel>(DBconnectionString,databaseid,"task"), new CosmosDbService<EscalateTask>(DBconnectionString, databaseid, "escalatetask")));
         services.AddSingleton<AIService>(sp =>
         {
             var telemetryClient = sp.GetRequiredService<TelemetryClient>();

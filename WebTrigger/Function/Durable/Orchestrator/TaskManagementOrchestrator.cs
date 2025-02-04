@@ -6,6 +6,7 @@ using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
 using WebTrigger.Function.Durable.Activity;
 using WebTrigger.Model;
+using static WebTrigger.Function.Durable.Activity.TaskActivityTriggers;
 
 namespace WebTrigger.Function.Durable.Orchestrator
 {
@@ -27,7 +28,7 @@ namespace WebTrigger.Function.Durable.Orchestrator
 
             await context.CallActivityAsync(nameof(TaskActivityTriggers.CheckPriorityAndNotify), taskDetails.task);
 
-            if (taskDetails!.task.Status.Equals(StatusModel.Pending))
+            if (taskDetails!.task!.Status.Equals(StatusModel.Pending))
             {
                 var timer = context.CreateTimer(taskDetails.task.Deadline!.Value.AddMinutes(-15), CancellationToken.None);
                 await timer;
@@ -38,11 +39,27 @@ namespace WebTrigger.Function.Durable.Orchestrator
                 }
             }
         }
+        [Function(nameof(BulkImportOrchestrator))]
+        public static async Task BulkImportOrchestrator(
+            [OrchestrationTrigger] TaskOrchestrationContext context)
+        {
+
+            var csvData = context.GetInput<string>();
+
+            var importData = await context.CallActivityAsync<IEnumerable<TaskModel>>(nameof(TaskActivityTriggers.ReadCSV), csvData);
+
+            if (importData.Count() > 1)
+            {
+                await context.CallActivityAsync(nameof(TaskActivityTriggers.ScaleRU), new ScaleRUInput() { count=importData.Count(), autoscale =false});
+
+                await context.CallActivityAsync(nameof(TaskActivityTriggers.ImportCSV), importData);
+            }
+        }
     }
 
     public class DynamicClass
     {
-        public TaskModel task { get; set; }
-        public string sessionId {  get; set; }
+        public TaskModel ?task { get; set; }
+        public string ?sessionId {  get; set; }
     }
 }

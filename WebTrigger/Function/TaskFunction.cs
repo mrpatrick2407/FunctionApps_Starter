@@ -127,12 +127,12 @@ new DynamicClass() { task = task, sessionId = GetSessionId(req)! });
             return new OkObjectResult(tasks);
         }
         [Function("BulkImport")]
-        public async Task<IActionResult> BulkImport(
-    [BlobTrigger("bulk")] Stream blob, FunctionContext context)
+        public async Task BulkImport(
+    [BlobTrigger("bulk")] Stream blob, [DurableClient]DurableTaskClient client, FunctionContext context)
         {
-           var streamData=new StreamReader(blob).ReadToEnd();
-           var deserializedData=CSVService<TaskModel>.ReadCSV(streamData);
-            
+           var csvData=new StreamReader(blob).ReadToEnd();
+            string instanceID = await client.ScheduleNewOrchestrationInstanceAsync(nameof(TaskManagementOrchestrator.BulkImportOrchestrator),csvData);
+            Console.WriteLine($"Bulk import started of instance id {instanceID}");
         }
     }
 

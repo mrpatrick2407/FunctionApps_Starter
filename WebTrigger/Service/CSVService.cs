@@ -25,8 +25,8 @@ namespace WebTrigger.Service
             });
 
             csv.Context.TypeConverterCache.AddConverter<DateTime>(new DateTimeConverter());
-            var result = csv.GetRecords<T>();
-            return result;
+            var result = csv.GetRecords<T>().ToList();
+            return result.AsEnumerable();
         }
     }
 }

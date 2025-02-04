@@ -39,7 +39,7 @@ namespace WebTrigger.Service
                 }
                 else
                 {
-                    Console.WriteLine($"Batch insert failed for partition key: {group.Key}, Status: {response.StatusCode}");
+                    Console.WriteLine($"Batch insert passed for partition key: {group.Key}, Status: {response.StatusCode}");
                 }
             }
         }
@@ -100,7 +100,7 @@ namespace WebTrigger.Service
         {
             await _container.UpsertItemAsync(obj, new PartitionKey(partitionKey));
         }
-        public async Task AdjustThroughputAsync<T>(Container container,int recordCount, bool enableAutoscale = false)
+        public async Task AdjustThroughputAsync(Container container,int recordCount, bool enableAutoscale = false)
         {
             int targetThroughput = CalculateThroughput(recordCount, enableAutoscale);
 

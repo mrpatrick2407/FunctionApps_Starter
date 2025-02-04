@@ -73,5 +73,29 @@ namespace WebTrigger.Function.Durable.Activity
             }
             return StatusModel.Pending;
         }
+        [Function(nameof(ReadCSV))]
+        public static IEnumerable<TaskModel> ReadCSV([ActivityTrigger] string csvData)
+        {
+            var result= CSVService<TaskModel>.ReadCSV(csvData);
+            result.AsEnumerable().ToList().ForEach(y => y.id = Guid.NewGuid().ToString());
+            return result.AsEnumerable();
+        }
+        [Function(nameof(ScaleRU))]
+        public static async Task ScaleRU([ActivityTrigger] ScaleRUInput input)
+        {
+            var count = input.count;
+            var autoScale = input.autoscale;
+      //      await taskService._taskCosmosService.AdjustThroughputAsync(taskService._taskCosmosService._container,count,autoScale);
+        }
+        [Function(nameof(ImportCSV))]
+        public static async Task ImportCSV([ActivityTrigger] IEnumerable<TaskModel> importData)
+        {
+            await taskService._taskCosmosService.BulkInsert(importData,"userId");
+        }
+        public class ScaleRUInput
+        {
+            public int count { get; set; }
+            public bool autoscale { get; set; }
+        }
     }
 }

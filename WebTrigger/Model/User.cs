@@ -109,6 +109,7 @@ namespace WebTrigger.Model
     {
         Pending,
         Completed,
+        In_Progress,
         InProgress
     }
 

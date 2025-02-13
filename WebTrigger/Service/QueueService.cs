@@ -5,10 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WebTrigger.Service.IService;
 
 namespace WebTrigger.Service
 {
-    public class QueueService:IUrlQueueService,INotificationQueueService
+    public class QueueService:IUrlQueueService,INotificationQueueService,IDeviceQueueService
     {
         public readonly QueueClient _queueClient;
         public QueueService(string connectionString,string queueName) {
@@ -18,6 +19,13 @@ namespace WebTrigger.Service
         {
             string serializedMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
             await _queueClient.SendMessageAsync(serializedMessage);
+        }
+        public async Task SendBulkMessagesAsync(List<string> messages)
+        {
+            await Parallel.ForEachAsync(messages, async (message, _) =>
+            {
+                await _queueClient.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(message)));
+            });
         }
     }
 }

@@ -12,8 +12,10 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using System.Data.Common;
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text;
 using WebTrigger.Model;
 using WebTrigger.Service;
@@ -26,12 +28,13 @@ namespace WebTrigger.Function
         private readonly HttpClient _client;
         private UserService _userService;
         private IUrlQueueService _urlQueueService;
+        private IDeviceQueueService _deviceQueueService;
         private INotificationQueueService _notificationQueueService;
         private IImageBlobService _imageBlobService;
         private IImageSmallBlobService _imageSmallBlobService;
         private IImageMediumBlobService _imageMediumBlobService;
         private SessionService _sessionService;
-        public WebTrigger(HttpClient client,UserService userService,SessionService sessionService,IUrlQueueService urlQueueService,INotificationQueueService notificationQueueService,IImageBlobService imageBlobService,IImageMediumBlobService imageMediumBlobService,IImageSmallBlobService imageSmallBlobService, ILogger<WebTrigger> logger)
+        public WebTrigger(HttpClient client,UserService userService,IDeviceQueueService deviceQueueService,SessionService sessionService,IUrlQueueService urlQueueService,INotificationQueueService notificationQueueService,IImageBlobService imageBlobService,IImageMediumBlobService imageMediumBlobService,IImageSmallBlobService imageSmallBlobService, ILogger<WebTrigger> logger)
         {
             _client = client;
             _logger = logger;
@@ -42,6 +45,7 @@ namespace WebTrigger.Function
             _imageMediumBlobService = imageMediumBlobService;
             _imageSmallBlobService = imageSmallBlobService;
             _sessionService = sessionService;
+            _deviceQueueService = deviceQueueService;
         }
 
         [Function("RegisterUser")]
@@ -143,6 +147,14 @@ namespace WebTrigger.Function
                 await response.WriteAsJsonAsync(new { message = "New session created" });
                 return response;
             }
+        }
+        [Function("DeviceQueueMessage")]
+        public async Task<HttpResponseData> DeviceQueueMessage(
+            [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, [Microsoft.Azure.Functions.Worker.Http.FromBody] IEnumerable<Device> user, FunctionContext context)
+        {
+            List<string> userStringList = user.Select(x =>JsonConvert.SerializeObject(x)).ToList();
+            await _deviceQueueService.SendBulkMessagesAsync(userStringList);
+            return req.CreateResponse(HttpStatusCode.OK);
         }
 
     }

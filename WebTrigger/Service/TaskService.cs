@@ -38,6 +38,12 @@ namespace WebTrigger.Service
             string query = $"SELECT * FROM c WHERE c.userId = '{userId}'";
             return await _taskCosmosService.GetItemsByQueryAsync(query);
         }
+
+        public async Task<IEnumerable<TaskModel>> GetTasks()
+        {
+            string query = $"SELECT * FROM c";
+            return await _taskCosmosService.GetItemsByQueryAsync(query);
+        }
     }
 
 }

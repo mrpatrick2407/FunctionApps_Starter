@@ -112,5 +112,10 @@ namespace WebTrigger.Model
         In_Progress,
         InProgress
     }
-
+    public class Device
+    {
+        public string? Type { get; set; }
+        public string? Brand { get; set; }
+        public string? Model { get; set; }
+    }
 }

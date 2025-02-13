@@ -1,9 +1,13 @@
 using Microsoft.ApplicationInsights;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.Identity.Web;
+using Newtonsoft.Json;
 using WebTrigger.Model;
 using WebTrigger.Service;
 using WebTrigger.Service.IService;
@@ -11,7 +15,9 @@ var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
-
+        var authority = $"{Environment.GetEnvironmentVariable("AzureAdB2C__Instance")}/{Environment.GetEnvironmentVariable("AzureAdB2C__SignUpSignInPolicyId")}";
+        var clientId = Environment.GetEnvironmentVariable("AzureAdB2C__ClientId");
+        var audience = Environment.GetEnvironmentVariable("AzureAdB2C__Audience");
         services.AddApplicationInsightsTelemetryWorkerService(option=>option.ConnectionString= Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING"));
         services.ConfigureFunctionsApplicationInsights();
         services.Configure<KestrelServerOptions>(options => options.AllowSynchronousIO = true);
@@ -21,6 +27,7 @@ var host = new HostBuilder()
         services.AddSingleton(new UserService(connectionString, "User"));
         services.AddSingleton<IUrlQueueService>(new QueueService(connectionString, "url"));
         services.AddSingleton<INotificationQueueService>(new QueueService(connectionString, "notificationqueue"));
+        services.AddSingleton<IDeviceQueueService>(new QueueService(connectionString, "devicequeue"));
         services.AddSingleton<IImageBlobService>(new BlobService(connectionString, "ppimage"));
         services.AddSingleton<IImageSmallBlobService>(new BlobService(connectionString, "ppsmall"));
         services.AddSingleton<IImageMediumBlobService>(new BlobService(connectionString, "ppmedium"));
@@ -41,6 +48,12 @@ var host = new HostBuilder()
             var appInsightsApi = Environment.GetEnvironmentVariable("AI_API");
             return new AIService(telemetryClient, logger, aiAppKey!, aiAppId!, appInsightsApi!);
         });
+        //services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddMicrosoftIdentityWebApi(options =>
+        //{
+        //    options.Authority = authority;
+        //    options.Audience = audience;
+        //}, options => { });
+        //services.AddAuthorization();
     })
     .Build();
 

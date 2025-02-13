@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -133,6 +134,14 @@ new DynamicClass() { task = task, sessionId = GetSessionId(req)! });
            var csvData=new StreamReader(blob).ReadToEnd();
             string instanceID = await client.ScheduleNewOrchestrationInstanceAsync(nameof(TaskManagementOrchestrator.BulkImportOrchestrator),csvData);
             Console.WriteLine($"Bulk import started of instance id {instanceID}");
+        }
+        [Authorize]
+        [Function("GetTasks")]
+        public async Task<IActionResult> GetTasks(
+  [HttpTrigger(AuthorizationLevel.Function, "get", Route = "tasks")] HttpRequest req, string userId)
+        {
+            var result = await _taskService.GetTasks();
+            return new JsonResult(result);
         }
     }
 

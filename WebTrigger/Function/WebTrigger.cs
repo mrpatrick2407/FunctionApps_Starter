@@ -1,21 +1,18 @@
-using Azure.Data.Tables;
-using Azure.Storage.Blobs;
-using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using System.Data.Common;
+using StaticHelper;
+using System.Diagnostics;
 using System.Net;
-using System.Net.Http.Json;
-using System.Security.Cryptography;
 using System.Text;
 using WebTrigger.Model;
 using WebTrigger.Service;
@@ -27,6 +24,7 @@ namespace WebTrigger.Function
         private readonly ILogger<WebTrigger> _logger;
         private readonly HttpClient _client;
         private UserService _userService;
+        private readonly IFeatureManager _featureManager;
         private IUrlQueueService _urlQueueService;
         private IDeviceQueueService _deviceQueueService;
         private INotificationQueueService _notificationQueueService;
@@ -34,10 +32,12 @@ namespace WebTrigger.Function
         private IImageSmallBlobService _imageSmallBlobService;
         private IImageMediumBlobService _imageMediumBlobService;
         private SessionService _sessionService;
-        public WebTrigger(HttpClient client,UserService userService,IDeviceQueueService deviceQueueService,SessionService sessionService,IUrlQueueService urlQueueService,INotificationQueueService notificationQueueService,IImageBlobService imageBlobService,IImageMediumBlobService imageMediumBlobService,IImageSmallBlobService imageSmallBlobService, ILogger<WebTrigger> logger)
+        private readonly IConfiguration _configuration;
+        public WebTrigger(IFeatureManager featureManager, IConfiguration configuration,HttpClient client,UserService userService,IDeviceQueueService deviceQueueService,SessionService sessionService,IUrlQueueService urlQueueService,INotificationQueueService notificationQueueService,IImageBlobService imageBlobService,IImageMediumBlobService imageMediumBlobService,IImageSmallBlobService imageSmallBlobService, ILogger<WebTrigger> logger)
         {
             _client = client;
             _logger = logger;
+            _featureManager= featureManager;
             _urlQueueService = urlQueueService;
             _notificationQueueService = notificationQueueService;
             _userService = userService;
@@ -46,6 +46,7 @@ namespace WebTrigger.Function
             _imageSmallBlobService = imageSmallBlobService;
             _sessionService = sessionService;
             _deviceQueueService = deviceQueueService;
+            _configuration = configuration;
         }
 
         [Function("RegisterUser")]
@@ -156,6 +157,96 @@ namespace WebTrigger.Function
             await _deviceQueueService.SendBulkMessagesAsync(userStringList);
             return req.CreateResponse(HttpStatusCode.OK);
         }
+        [Function("HttpAlive")]
+        public async Task<HttpResponseData> HttpAlive(
+            [HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context)
+        {
+            var res= req.CreateResponse(HttpStatusCode.OK);
+            await res.WriteAsJsonAsync(new { message="Avoding Cold start"});
+            return res;
+        }
+        [Function("FeatureFlagTest")]
+        public async Task<HttpResponseData> FeatureFlagTest(
+            [HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context)
+        {
+            string keyName = "CookbookApP:Settings:Greeting";
+            string message = _configuration[keyName]!;
+            var res = req.CreateResponse(HttpStatusCode.OK);
+            if (await _featureManager.IsEnabledAsync("TurnOnGreeting"))
+            {
+                await res.WriteAsJsonAsync(new { message = message });
+            }
+            else
+            {
+                await res.WriteAsJsonAsync(new { message = "NoGreeting" });
+            }
+            return res;
+        }
+        [Function("HttpTriggerAvoidCS")]
+        public async Task HttpTriggerAvoidCS([TimerTrigger("*/5 * * * *")] TimerInfo myTimer)
+        {
+            await _client.GetAsync("https://azure-first.azurewebsites.net/api/HttpAlive"); 
+            
+        }
+        [Function("DeviceQueueTrigger")]
+        public void DeviceQueueTrigger(
+        [QueueTrigger("devicequeue", Connection = "AzureWebJobsStorage")] QueueMessage message)
+        {
+            // Decode message body
+            string messageBody = Encoding.UTF8.GetString(message.Body);
 
+            // Log queue message metadata
+            _logger.LogInformation($"Queue Payload: {messageBody}");
+            _logger.LogInformation($"Message ID: {message.MessageId}");
+            _logger.LogInformation($"Dequeue Count: {message.DequeueCount}");
+            _logger.LogInformation($"Insertion Time: {message.InsertedOn}");
+            _logger.LogInformation($"Expiration Time: {message.ExpiresOn}");
+            _logger.LogInformation($"Next Visible Time: {message.NextVisibleOn}");
+            _logger.LogInformation($"Pop Receipt: {message.PopReceipt}");
+            throw new Exception("Checking Dequeue Count and then poisoned messages");
+        }
+        [Function("TimerFunction")]
+        public async Task TimerFunction([TimerTrigger("0 */5 * * * *")] TimerInfo timer)
+        {
+            _logger.LogInformation($"Timer Trigger executed at: {DateTime.UtcNow}");
+
+            string exePath = Path.Combine(Directory.GetCurrentDirectory(), "win-x64", "TheoAPI.exe");
+
+            if (File.Exists(exePath))
+            {
+                _logger.LogInformation($"Executing EXE: {exePath}");
+
+                try
+                {
+                    ProcessStartInfo psi = new ProcessStartInfo
+                    {
+                        FileName = exePath,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    using (Process process = new Process { StartInfo = psi })
+                    {
+                        process.OutputDataReceived += (sender, args) => _logger.LogInformation(args.Data);
+                        process.ErrorDataReceived += (sender, args) => _logger.LogError(args.Data);
+
+                        process.Start();
+                        process.BeginOutputReadLine();
+                        process.BeginErrorReadLine();
+                        process.WaitForExit();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error running EXE: {ex.Message}");
+                }
+            }
+            else
+            {
+                _logger.LogError($"EXE file not found: {exePath}");
+            }
+        }
     }
 }

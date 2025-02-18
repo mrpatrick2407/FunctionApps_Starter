@@ -2,17 +2,30 @@ using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using StaticHelper;
 using WebTrigger.Model;
 using WebTrigger.Service;
 using WebTrigger.Service.IService;
+
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
+    .ConfigureAppConfiguration(builder =>
+    {
+        string cs = Environment.GetEnvironmentVariable("AzureAppConfigurationConnectionString")!;
+        builder.AddAzureAppConfiguration(options =>
+        {
+            options.Connect(cs)
+                   .UseFeatureFlags(); // Enable feature flags support
+        });
+    })
     .ConfigureServices(services =>
     {
         var authority = $"{Environment.GetEnvironmentVariable("AzureAdB2C__Instance")}/{Environment.GetEnvironmentVariable("AzureAdB2C__SignUpSignInPolicyId")}";
@@ -23,7 +36,7 @@ var host = new HostBuilder()
         services.Configure<KestrelServerOptions>(options => options.AllowSynchronousIO = true);
         services.AddHttpClient();
         services.AddMvc();
-        string connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage")!;
+        string connectionString = StaticHelperClass.GetAzureStorageConnectionString(); 
         services.AddSingleton(new UserService(connectionString, "User"));
         services.AddSingleton<IUrlQueueService>(new QueueService(connectionString, "url"));
         services.AddSingleton<INotificationQueueService>(new QueueService(connectionString, "notificationqueue"));
@@ -53,7 +66,9 @@ var host = new HostBuilder()
         //    options.Authority = authority;
         //    options.Audience = audience;
         //}, options => { });
-        //services.AddAuthorization();
+        //services.AddAuthorization(); 
+        services.AddAzureAppConfiguration();
+        services.AddFeatureManagement();
     })
     .Build();
 

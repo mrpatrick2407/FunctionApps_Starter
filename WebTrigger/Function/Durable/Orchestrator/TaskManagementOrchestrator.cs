@@ -54,6 +54,7 @@ namespace WebTrigger.Function.Durable.Orchestrator
 
                 await context.CallActivityAsync(nameof(TaskActivityTriggers.ImportCSV), importData);
             }
+   
         }
     }
 

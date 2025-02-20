@@ -36,7 +36,7 @@ var host = new HostBuilder()
         services.Configure<KestrelServerOptions>(options => options.AllowSynchronousIO = true);
         services.AddHttpClient();
         services.AddMvc();
-        string connectionString = StaticHelperClass.GetAzureStorageConnectionString(); 
+        var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage")!;
         services.AddSingleton(new UserService(connectionString, "User"));
         services.AddSingleton<IUrlQueueService>(new QueueService(connectionString, "url"));
         services.AddSingleton<INotificationQueueService>(new QueueService(connectionString, "notificationqueue"));

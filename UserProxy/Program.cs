@@ -5,16 +5,18 @@ using WebTrigger.Service;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
+    .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices(services =>
     {
         var authority = $"{Environment.GetEnvironmentVariable("AzureAdB2C__Instance")}/{Environment.GetEnvironmentVariable("AzureAdB2C__SignUpSignInPolicyId")}";
         var clientId = Environment.GetEnvironmentVariable("AzureAdB2C__ClientId");
         var audience = Environment.GetEnvironmentVariable("AzureAdB2C__Audience");
         var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+
         services.Configure<KestrelServerOptions>(options => options.AllowSynchronousIO = true);
         services.AddHttpClient();
         services.AddMvc();
-        services.AddSingleton(new UserService(connectionString, "User"));
+        services.AddSingleton(new UserService(connectionString!, "User"));
         string DBconnectionString = Environment.GetEnvironmentVariable("CosmosDBConnectionString")!;
         string databaseid = Environment.GetEnvironmentVariable("DatabaseId")!;
         string containerName = Environment.GetEnvironmentVariable("SessionContainerName")!;

@@ -4,9 +4,9 @@
     "proxy1": {
       "matchCondition": {
         "methods": [ "GET" ],
-        "route": "/api/{test}"
+        "route": "/api/get-user-by-id/{userId}"
       },
-      "backendUri": "https://<AnotherApp>.azurewebsites.net/api/<FunctionName>"
+      "backendUri": "https://azure-last.azurewebsites.net/api/getUser/{userId}"
     }
   }
 }

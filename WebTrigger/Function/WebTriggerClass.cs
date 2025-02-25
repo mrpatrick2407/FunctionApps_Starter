@@ -19,11 +19,11 @@ using WebTrigger.Service;
 using WebTrigger.Service.IService;
 namespace WebTrigger.Function
 {
-    public class WebTrigger
+    public class WebTriggerClass
     {
-        private readonly ILogger<WebTrigger> _logger;
+        private readonly ILogger<WebTriggerClass> _logger;
         private readonly HttpClient _client;
-        private UserService _userService;
+        private IUserService _userService;
         private readonly IFeatureManager _featureManager;
         private IUrlQueueService _urlQueueService;
         private IDeviceQueueService _deviceQueueService;
@@ -31,9 +31,9 @@ namespace WebTrigger.Function
         private IImageBlobService _imageBlobService;
         private IImageSmallBlobService _imageSmallBlobService;
         private IImageMediumBlobService _imageMediumBlobService;
-        private SessionService _sessionService;
+        private ISessionService _sessionService;
         private readonly IConfiguration _configuration;
-        public WebTrigger(IFeatureManager featureManager, IConfiguration configuration,HttpClient client,UserService userService,IDeviceQueueService deviceQueueService,SessionService sessionService,IUrlQueueService urlQueueService,INotificationQueueService notificationQueueService,IImageBlobService imageBlobService,IImageMediumBlobService imageMediumBlobService,IImageSmallBlobService imageSmallBlobService, ILogger<WebTrigger> logger)
+        public WebTriggerClass(IFeatureManager featureManager, IConfiguration configuration,HttpClient client,IUserService userService,IDeviceQueueService deviceQueueService,ISessionService sessionService,IUrlQueueService urlQueueService,INotificationQueueService notificationQueueService,IImageBlobService imageBlobService,IImageMediumBlobService imageMediumBlobService,IImageSmallBlobService imageSmallBlobService, ILogger<WebTriggerClass> logger)
         {
             _client = client;
             _logger = logger;

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaticHelper", "StaticHelpe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserProxy", "UserProxy\UserProxy.csproj", "{003F6313-E7E8-4267-A3E7-8252607CF28B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{CB5BB91E-2FED-4C00-A6A9-A41F5BED61D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{003F6313-E7E8-4267-A3E7-8252607CF28B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{003F6313-E7E8-4267-A3E7-8252607CF28B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{003F6313-E7E8-4267-A3E7-8252607CF28B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB5BB91E-2FED-4C00-A6A9-A41F5BED61D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB5BB91E-2FED-4C00-A6A9-A41F5BED61D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB5BB91E-2FED-4C00-A6A9-A41F5BED61D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB5BB91E-2FED-4C00-A6A9-A41F5BED61D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

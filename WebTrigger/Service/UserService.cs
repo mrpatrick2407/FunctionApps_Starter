@@ -6,10 +6,11 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using WebTrigger.Model;
+using WebTrigger.Service.IService;
 
 namespace WebTrigger.Service
 {
-    public class UserService
+    public class UserService:IUserService
     {
         private readonly TableClient _tableClient;
         public UserService(string connectionString,string tableName)

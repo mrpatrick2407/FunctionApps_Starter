@@ -37,7 +37,7 @@ var host = new HostBuilder()
         services.AddHttpClient();
         services.AddMvc();
         var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage")!;
-        services.AddSingleton(new UserService(connectionString, "User"));
+        services.AddSingleton<IUserService>(new UserService(connectionString, "User"));
         services.AddSingleton<IUrlQueueService>(new QueueService(connectionString, "url"));
         services.AddSingleton<INotificationQueueService>(new QueueService(connectionString, "notificationqueue"));
         services.AddSingleton<IDeviceQueueService>(new QueueService(connectionString, "devicequeue"));
@@ -48,7 +48,7 @@ var host = new HostBuilder()
         string DBconnectionString = Environment.GetEnvironmentVariable("CosmosDBConnectionString")!;
         string databaseid = Environment.GetEnvironmentVariable("DatabaseId")!;
         string containerName = Environment.GetEnvironmentVariable("SessionContainerName")!;
-        services.AddSingleton(new SessionService(new(DBconnectionString, databaseid, containerName)));
+        services.AddSingleton<ISessionService>(new SessionService(new(DBconnectionString, databaseid, containerName)));
         services.AddSingleton(new NotificationService(Environment.GetEnvironmentVariable("SENDGRID_APIKEY")!, Environment.GetEnvironmentVariable("ACCOUNT_SID")!,
             Environment.GetEnvironmentVariable("AUTH_TOKEN")!));
         services.AddSingleton(new TaskService(new CosmosDbService<TaskModel>(DBconnectionString,databaseid,"task"), new CosmosDbService<EscalateTask>(DBconnectionString, databaseid, "escalatetask")));

@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WebTrigger.Model;
+using WebTrigger.Service.IService;
 
 namespace WebTrigger.Service
 {
-    public class SessionService
+    public class SessionService:ISessionService
     {
         private readonly CosmosDbService<Session> _cosmosDbService;
 

@@ -30,6 +30,12 @@ namespace WebTrigger.Function.Durable.Activity
             taskService = new(new CosmosDbService<TaskModel>(DBConnectionString, DatabaseId, TaskContainer),new CosmosDbService<EscalateTask>(DBConnectionString, DatabaseId, EscalateContainer));
             notificationService = new(SendGridApiKey, TwilioAccountSid, TwilioAuthToken);
             userService = new(ConnectionString, "User");
+            ConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage")!;
+
+            if (string.IsNullOrEmpty(ConnectionString))
+            {
+                throw new ArgumentNullException(nameof(ConnectionString), "AzureWebJobsStorage is missing.");
+            }
         }
         [Function(nameof(CreateTaskDurable))]
         public static async Task CreateTaskDurable([ActivityTrigger] TaskModel taskDetails)

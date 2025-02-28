@@ -185,7 +185,7 @@ namespace WebTrigger.Function
         [Function("HttpTriggerAvoidCS")]
         public async Task HttpTriggerAvoidCS([TimerTrigger("*/5 * * * *")] TimerInfo myTimer)
         {
-            await _client.GetAsync("https://azure-first.azurewebsites.net/api/HttpAlive"); 
+           // await _client.GetAsync("https://azure-first.azurewebsites.net/api/HttpAlive"); 
             
         }
         [Function("DeviceQueueTrigger")]
@@ -210,43 +210,43 @@ namespace WebTrigger.Function
         {
             _logger.LogInformation($"Timer Trigger executed at: {DateTime.UtcNow}");
 
-            string exePath = Path.Combine(Directory.GetCurrentDirectory(), "win-x64", "TheoAPI.exe");
+            //string exePath = Path.Combine(Directory.GetCurrentDirectory(), "win-x64", "TheoAPI.exe");
 
-            if (File.Exists(exePath))
-            {
-                _logger.LogInformation($"Executing EXE: {exePath}");
+            //if (File.Exists(exePath))
+            //{
+            //    _logger.LogInformation($"Executing EXE: {exePath}");
 
-                try
-                {
-                    ProcessStartInfo psi = new ProcessStartInfo
-                    {
-                        FileName = exePath,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
+            //    try
+            //    {
+            //        ProcessStartInfo psi = new ProcessStartInfo
+            //        {
+            //            FileName = exePath,
+            //            RedirectStandardOutput = true,
+            //            RedirectStandardError = true,
+            //            UseShellExecute = false,
+            //            CreateNoWindow = true
+            //        };
 
-                    using (Process process = new Process { StartInfo = psi })
-                    {
-                        process.OutputDataReceived += (sender, args) => _logger.LogInformation(args.Data);
-                        process.ErrorDataReceived += (sender, args) => _logger.LogError(args.Data);
+            //        using (Process process = new Process { StartInfo = psi })
+            //        {
+            //            process.OutputDataReceived += (sender, args) => _logger.LogInformation(args.Data);
+            //            process.ErrorDataReceived += (sender, args) => _logger.LogError(args.Data);
 
-                        process.Start();
-                        process.BeginOutputReadLine();
-                        process.BeginErrorReadLine();
-                        process.WaitForExit();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error running EXE: {ex.Message}");
-                }
-            }
-            else
-            {
-                _logger.LogError($"EXE file not found: {exePath}");
-            }
+            //            process.Start();
+            //            process.BeginOutputReadLine();
+            //            process.BeginErrorReadLine();
+            //            process.WaitForExit();
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        _logger.LogError($"Error running EXE: {ex.Message}");
+            //    }
+            //}
+            //else
+            //{
+            //    _logger.LogError($"EXE file not found: {exePath}");
+            //}
         }
     }
 }

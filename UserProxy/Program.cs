@@ -12,7 +12,10 @@ var host = new HostBuilder()
         var clientId = Environment.GetEnvironmentVariable("AzureAdB2C__ClientId");
         var audience = Environment.GetEnvironmentVariable("AzureAdB2C__Audience");
         var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
-
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new ArgumentNullException(nameof(connectionString), "AzureWebJobsStorage is missing.");
+        }
         services.Configure<KestrelServerOptions>(options => options.AllowSynchronousIO = true);
         services.AddHttpClient();
         services.AddMvc();

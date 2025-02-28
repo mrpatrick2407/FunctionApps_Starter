@@ -37,6 +37,11 @@ var host = new HostBuilder()
         services.AddHttpClient();
         services.AddMvc();
         var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage")!;
+ 
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new ArgumentNullException(nameof(connectionString), "AzureWebJobsStorage is missing.");
+        }
         services.AddSingleton<IUserService>(new UserService(connectionString, "User"));
         services.AddSingleton<IUrlQueueService>(new QueueService(connectionString, "url"));
         services.AddSingleton<INotificationQueueService>(new QueueService(connectionString, "notificationqueue"));

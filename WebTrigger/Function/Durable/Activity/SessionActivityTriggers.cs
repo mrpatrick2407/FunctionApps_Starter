@@ -14,6 +14,7 @@ namespace WebTrigger.Function.Durable.Activity
     {
         public static readonly string DBConnectionString = Environment.GetEnvironmentVariable("CosmosDBConnectionString")!;
         public static readonly string ConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage")!;
+
         public static readonly string SessionContainer = "session";
         public static readonly SessionService sessionService;
         public static readonly NotificationService notificationService;
@@ -31,6 +32,12 @@ namespace WebTrigger.Function.Durable.Activity
             sessionService =new(new CosmosDbService<Session>(DBConnectionString,DatabaseId,SessionContainer));
             notificationService =new(SendGridApiKey,TwilioAccountSid,TwilioAuthToken);
             userService =new(ConnectionString,"User");
+            ConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage")!;
+
+            if (string.IsNullOrEmpty(ConnectionString))
+            {
+                throw new ArgumentNullException(nameof(ConnectionString), "AzureWebJobsStorage is missing.");
+            }
         }
         [Function("ValidateSession")]
         public static async Task<bool> ValidateSession([ActivityTrigger] string sessionId)

@@ -49,7 +49,7 @@ namespace WebTrigger.Function
             _configuration = configuration;
         }
 
-        [Function("RegisterUser")]
+        [Function("UserRegister")]
         public async Task<HttpResponseData> RegisterUser(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, [Microsoft.Azure.Functions.Worker.Http.FromBody]User user, FunctionContext context)
         {
